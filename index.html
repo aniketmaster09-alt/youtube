@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -63,6 +63,9 @@
         <p><strong>Source:</strong> <span id="source"></span></p>
       </div>
     </div>
+    <div class="video-player" id="videoPlayer" style="display:none;margin:20px 0;">
+      <iframe id="playerFrame" width="100%" height="400" frameborder="0" allowfullscreen style="border-radius:12px;"></iframe>
+    </div>
     <div class="formats" id="formats"></div>
   </div>
 </div>
@@ -104,6 +107,12 @@ function displayA2ZResult(data){
   document.getElementById('duration').textContent=formatDuration(info.duration);
   document.getElementById('source').textContent='YouTube';
 
+  const videoId=extractVideoId(document.getElementById('urlInput').value);
+  if(videoId){
+    document.getElementById('playerFrame').src=`https://www.youtube.com/embed/${videoId}`;
+    document.getElementById('videoPlayer').style.display='block';
+  }
+
   const formatsContainer=document.getElementById('formats');
   formatsContainer.innerHTML='';
 
@@ -142,11 +151,12 @@ function createFormatSection(title,formats){
   return section;
 }
 
+function extractVideoId(url){const match=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);return match?match[1]:null;}
 function formatDuration(s){const m=Math.floor(s/60),r=s%60;return `${m}:${r.toString().padStart(2,'0')}`}
 function showLoading(b){document.getElementById('loading').style.display=b?'block':'none';document.getElementById('downloadBtn').disabled=b;}
 function showError(msg){const e=document.getElementById('error');e.textContent=msg;e.style.display='block';}
 function hideError(){document.getElementById('error').style.display='none';}
-function hideVideoInfo(){document.getElementById('videoInfo').style.display='none';}
+function hideVideoInfo(){document.getElementById('videoInfo').style.display='none';document.getElementById('videoPlayer').style.display='none';}
 </script>
 </body>
 </html>
