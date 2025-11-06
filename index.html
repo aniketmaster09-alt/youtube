@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f0f23;
+            color: #e5e5e5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 20px;
+            border: 1px solid #16213e;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="%23ffffff20"/><circle cx="80" cy="40" r="1" fill="%23ffffff15"/><circle cx="40" cy="80" r="1.5" fill="%23ffffff10"/></svg>');
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .input-section {
+            padding: 40px;
+            background: #16213e;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        #urlInput {
+            flex: 1;
+            padding: 18px 20px;
+            background: #0f0f23;
+            border: 2px solid #2c3e50;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #e5e5e5;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        #urlInput:focus {
+            border-color: #ff4757;
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+        }
+        
+        #urlInput::placeholder {
+            color: #7f8c8d;
+        }
+        
+        #downloadBtn {
+            padding: 18px 35px;
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        }
+        
+        #downloadBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+        }
+        
+        #downloadBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .video-info {
+            display: none;
+            padding: 40px;
+            background: #1a1a2e;
+        }
+        
+        .video-header {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #16213e;
+            border-radius: 15px;
+            border: 1px solid #2c3e50;
+        }
+        
+        .video-player {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            margin: 20px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            background: #000;
+        }
+        
+        .play-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+        }
+        
+        .thumbnail {
+            width: 160px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .video-details h3 {
+            color: #e5e5e5;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .video-meta {
+            color: #95a5a6;
+            font-size: 15px;
+        }
+        
+        .video-meta p {
+            margin-bottom: 8px;
+        }
+        
+        .video-meta strong {
+            color: #ff4757;
+        }
+        
+        .formats {
+            margin-top: 20px;
+        }
+        
+        .format-category {
+            margin-bottom: 20px;
+        }
+        
+        .format-category h4 {
+            color: #e5e5e5;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .format-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            background: #16213e;
+            border: 1px solid #2c3e50;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .format-item:hover {
+            background: #1e2a47;
+            border-color: #ff4757;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        .format-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .format-label {
+            font-weight: 600;
+            color: #e5e5e5;
+            font-size: 16px;
+        }
+        
+        .format-details {
+            font-size: 13px;
+            color: #95a5a6;
+            margin-top: 5px;
+        }
+        
+        .download-link {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #00d2d3, #54a0ff);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(84, 160, 255, 0.3);
+        }
+        
+        .download-link:hover {
+            background: linear-gradient(135deg, #54a0ff, #00d2d3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(84, 160, 255, 0.4);
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 40px;
+            display: none;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 YouTube Downloader</h1>
+            <p>Download YouTube videos in various formats</p>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="Paste YouTube URL here..." />
+                <button id="downloadBtn" onclick="fetchVideoInfo()">Get Download Links</button>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <span style="font-size: 13px; color: #7f8c8d; background: #0f0f23; padding: 8px 16px; border-radius: 20px; border: 1px solid #2c3e50;">🚀 Powered by A2Z Converter API</span>
+                <p style="font-size: 11px; color: #666; margin-top: 10px;">Run: python download_proxy.py (Flask backend required for downloads)</p>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Fetching video information...</p>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="video-info" id="videoInfo">
+            <div class="video-header">
+                <img id="thumbnail" class="thumbnail" src="" alt="Video thumbnail">
+                <div class="video-details">
+                    <h3 id="videoTitle"></h3>
+                    <div class="video-meta">
+                        <p><strong>Duration:</strong> <span id="duration"></span></p>
+                        <p><strong>Source:</strong> <span id="source"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="videoContainer" class="video-player" style="display: none; position: relative; cursor: pointer;">
+                <img id="playerThumbnail" src="" alt="Video thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; color: white; font-size: 30px;">
+                    ▶
+                </div>
+                <video id="videoPlayer" controls style="width: 100%; height: 100%; display: none;">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+            <div class="formats" id="formats"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchVideoInfo() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+            
+            if (!isValidYouTubeUrl(url)) {
+                showError('Please enter a valid YouTube URL');
+                return;
+            }
+            
+            showLoading(true);
+            hideError();
+            hideVideoInfo();
+            
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            while (attempts < maxAttempts) {
+                try {
+                    attempts++;
+                    console.log(`Attempt ${attempts}/${maxAttempts}`);
+                    
+                    const apiUrl = `https://www.a2zconverter.com/api/files/new-proxy?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    
+                    const result = await response.json();
+                    const data = JSON.parse(result.contents);
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    displayA2ZResult(data);
+                    showLoading(false);
+                    return;
+                    
+                } catch (error) {
+                    console.error(`Attempt ${attempts} failed:`, error);
+                    
+                    if (attempts === maxAttempts) {
+                        showError('Failed to fetch video information after multiple attempts. Please try again.');
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // Wait before retry
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+        }
+        
+        function isValidYouTubeUrl(url) {
+            const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
+            return youtubeRegex.test(url);
+        }
+        
+        function extractVideoId(url) {
+            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+        
+        function displayA2ZResult(data) {
+            document.getElementById('thumbnail').src = data.data.cover;
+            document.getElementById('videoTitle').textContent = data.data.title;
+            document.getElementById('duration').textContent = formatDuration(data.data.duration);
+            document.getElementById('source').textContent = 'YouTube';
+            
+            const formatsContainer = document.getElementById('formats');
+            formatsContainer.innerHTML = '';
+            
+            const videoFormats = data.data.items.filter(item => item.type === 'video' || item.type === 'video_with_audio');
+            const audioFormats = data.data.items.filter(item => item.type === 'audio');
+            
+            if (videoFormats.length > 0) {
+                const videoSection = createA2ZFormatSection('Video Formats', videoFormats);
+                formatsContainer.appendChild(videoSection);
+            }
+            
+            if (audioFormats.length > 0) {
+                const audioSection = createA2ZFormatSection('Audio Formats', audioFormats);
+                formatsContainer.appendChild(audioSection);
+            }
+            
+            document.getElementById('videoInfo').style.display = 'block';
+        }
+        
+        function createA2ZFormatSection(title, formats) {
+            const section = document.createElement('div');
+            section.className = 'format-category';
+            
+            const header = document.createElement('h4');
+            header.textContent = title;
+            section.appendChild(header);
+            
+            formats.forEach(format => {
+                const formatItem = document.createElement('div');
+                formatItem.className = 'format-item';
+                
+                const formatInfo = document.createElement('div');
+                formatInfo.className = 'format-info';
+                
+                const label = document.createElement('div');
+                label.className = 'format-label';
+                label.textContent = format.label;
+                
+                const details = document.createElement('div');
+                details.className = 'format-details';
+                details.textContent = `${format.ext.toUpperCase()} • ${format.width}x${format.height} • ${format.fps}fps`;
+                
+                formatInfo.appendChild(label);
+                formatInfo.appendChild(details);
+                
+                const playBtn = document.createElement('button');
+                playBtn.className = 'play-btn';
+                playBtn.textContent = '▶ Play';
+                playBtn.onclick = () => {
+                    const videoContainer = document.getElementById('videoContainer');
+                    const playerThumbnail = document.getElementById('playerThumbnail');
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    
+                    videoContainer.style.display = 'block';
+                    playerThumbnail.src = document.getElementById('thumbnail').src;
+                    
+                    videoContainer.onclick = function() {
+                        playerThumbnail.style.display = 'none';
+                        videoPlayer.style.display = 'block';
+                        videoPlayer.src = format.url;
+                        videoPlayer.play();
+                        videoContainer.onclick = null;
+                    };
+                };
+                
+                const downloadLink = document.createElement('button');
+                downloadLink.className = 'download-link';
+                downloadLink.textContent = '⬇ Download';
+                downloadLink.onclick = () => {
+                    const videoTitle = document.getElementById('videoTitle').textContent || 'video';
+                    const cleanTitle = videoTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+                    const filename = `${cleanTitle}_${format.label}.${format.ext}`;
+                    const proxyUrl = `http://localhost:5000/download?url=${encodeURIComponent(format.url)}&filename=${encodeURIComponent(filename)}`;
+                    
+                    const a = document.createElement('a');
+                    a.href = proxyUrl;
+                    a.download = filename;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                };
+                
+                const buttonGroup = document.createElement('div');
+                buttonGroup.style.display = 'flex';
+                buttonGroup.style.gap = '10px';
+                buttonGroup.appendChild(playBtn);
+                buttonGroup.appendChild(downloadLink);
+                
+                formatItem.appendChild(formatInfo);
+                formatItem.appendChild(buttonGroup);
+                section.appendChild(formatItem);
+            });
+            
+            return section;
+        }
+        
+        function displayApiResult(data) {
+            document.getElementById('thumbnail').src = data.thumbnail || '';
+            document.getElementById('videoTitle').textContent = data.title || 'YouTube Video';
+            document.getElementById('duration').textContent = formatDuration(data.duration || 0);
+            document.getElementById('source').textContent = 'YouTube';
+            
+            const formatsContainer = document.getElementById('formats');
+            formatsContainer.innerHTML = '';
+            
+            if (data.formats && data.formats.length > 0) {
+                const videoFormats = data.formats.filter(f => f.vcodec && f.vcodec !== 'none');
+                const audioFormats = data.formats.filter(f => f.acodec && f.acodec !== 'none' && (!f.vcodec || f.vcodec === 'none'));
+                
+                if (videoFormats.length > 0) {
+                    const videoSection = createApiFormatSection('Video Formats', videoFormats);
+                    formatsContainer.appendChild(videoSection);
+                }
+                
+                if (audioFormats.length > 0) {
+                    const audioSection = createApiFormatSection('Audio Formats', audioFormats);
+                    formatsContainer.appendChild(audioSection);
+                }
+            }
+            
+            document.getElementById('videoInfo').style.display = 'block';
+        }
+        
+        function createApiFormatSection(title, formats) {
+            const section = document.createElement('div');
+            section.className = 'format-category';
+            
+            const header = document.createElement('h4');
+            header.textContent = title;
+            section.appendChild(header);
+            
+            formats.forEach(format => {
+                const formatItem = document.createElement('div');
+                formatItem.className = 'format-item';
+                
+                const formatInfo = document.createElement('div');
+                formatInfo.className = 'format-info';
+                
+                const label = document.createElement('div');
+                label.className = 'format-label';
+                label.textContent = `${format.ext} (${format.height || format.abr || 'N/A'}${format.height ? 'p' : 'kbps'})`;
+                
+                const details = document.createElement('div');
+                details.className = 'format-details';
+                details.textContent = `${format.ext.toUpperCase()} • ${Math.round(format.filesize / 1024 / 1024) || 'N/A'}MB`;
+                
+                formatInfo.appendChild(label);
+                formatInfo.appendChild(details);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = format.url;
+                downloadLink.className = 'download-link';
+                downloadLink.textContent = 'Download';
+                downloadLink.target = '_blank';
+                downloadLink.download = '';
+                
+                formatItem.appendChild(formatInfo);
+                formatItem.appendChild(downloadLink);
+                section.appendChild(formatItem);
+            });
+            
+            return section;
+        }
+        
+        function displayZapcapResult(data) {
+            document.getElementById('thumbnail').src = data.thumbnail || '';
+            document.getElementById('videoTitle').textContent = data.title || 'YouTube Video';
+            document.getElementById('duration').textContent = formatDuration(data.duration || 0);
+            document.getElementById('source').textContent = 'YouTube';
+            
+            const formatsContainer = document.getElementById('formats');
+            formatsContainer.innerHTML = '';
+            
+            if (data.formats && data.formats.length > 0) {
+                const videoFormats = data.formats.filter(format => format.type === 'video' || format.hasVideo);
+                const audioFormats = data.formats.filter(format => format.type === 'audio' || format.hasAudio);
+                
+                if (videoFormats.length > 0) {
+                    const videoSection = createFormatSection('Video Formats', videoFormats);
+                    formatsContainer.appendChild(videoSection);
+                }
+                
+                if (audioFormats.length > 0) {
+                    const audioSection = createFormatSection('Audio Formats', audioFormats);
+                    formatsContainer.appendChild(audioSection);
+                }
+            } else if (data.downloadUrl) {
+                const section = document.createElement('div');
+                section.className = 'format-category';
+                
+                const header = document.createElement('h4');
+                header.textContent = 'Download Options';
+                section.appendChild(header);
+                
+                const formatItem = document.createElement('div');
+                formatItem.className = 'format-item';
+                
+                const formatInfo = document.createElement('div');
+                formatInfo.className = 'format-info';
+                
+                const label = document.createElement('div');
+                label.className = 'format-label';
+                label.textContent = data.quality || 'Video';
+                
+                const details = document.createElement('div');
+                details.className = 'format-details';
+                details.textContent = data.format || 'MP4';
+                
+                formatInfo.appendChild(label);
+                formatInfo.appendChild(details);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = data.downloadUrl;
+                downloadLink.className = 'download-link';
+                downloadLink.textContent = 'Download';
+                downloadLink.target = '_blank';
+                downloadLink.download = '';
+                
+                formatItem.appendChild(formatInfo);
+                formatItem.appendChild(downloadLink);
+                section.appendChild(formatItem);
+                formatsContainer.appendChild(section);
+            }
+            
+            document.getElementById('videoInfo').style.display = 'block';
+        }
+        
+        function displayVideoInfo(data) {
+            document.getElementById('thumbnail').src = data.thumbnail;
+            document.getElementById('videoTitle').textContent = data.title;
+            document.getElementById('duration').textContent = formatDuration(data.duration);
+            document.getElementById('source').textContent = data.source;
+            
+            const formatsContainer = document.getElementById('formats');
+            formatsContainer.innerHTML = '';
+            
+            // Group formats by type
+            const videoFormats = data.medias.filter(media => media.type === 'video');
+            const audioFormats = data.medias.filter(media => media.type === 'audio');
+            
+            if (videoFormats.length > 0) {
+                const videoSection = createFormatSection('Video Formats', videoFormats);
+                formatsContainer.appendChild(videoSection);
+            }
+            
+            if (audioFormats.length > 0) {
+                const audioSection = createFormatSection('Audio Formats', audioFormats);
+                formatsContainer.appendChild(audioSection);
+            }
+            
+            document.getElementById('videoInfo').style.display = 'block';
+        }
+        
+        function createFormatSection(title, formats) {
+            const section = document.createElement('div');
+            section.className = 'format-category';
+            
+            const header = document.createElement('h4');
+            header.textContent = title;
+            section.appendChild(header);
+            
+            formats.forEach(format => {
+                const formatItem = document.createElement('div');
+                formatItem.className = 'format-item';
+                
+                const formatInfo = document.createElement('div');
+                formatInfo.className = 'format-info';
+                
+                const label = document.createElement('div');
+                label.className = 'format-label';
+                label.textContent = format.label;
+                
+                const details = document.createElement('div');
+                details.className = 'format-details';
+                
+                let detailsText = `${format.ext.toUpperCase()}`;
+                if (format.width && format.height) {
+                    detailsText += ` • ${format.width}x${format.height}`;
+                }
+                if (format.bitrate) {
+                    detailsText += ` • ${Math.round(format.bitrate / 1000)}kbps`;
+                }
+                if (format.fps) {
+                    detailsText += ` • ${format.fps}fps`;
+                }
+                
+                details.textContent = detailsText;
+                
+                formatInfo.appendChild(label);
+                formatInfo.appendChild(details);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = format.url;
+                downloadLink.className = 'download-link';
+                downloadLink.textContent = 'Download';
+                downloadLink.target = '_blank';
+                downloadLink.download = '';
+                
+                formatItem.appendChild(formatInfo);
+                formatItem.appendChild(downloadLink);
+                section.appendChild(formatItem);
+            });
+            
+            return section;
+        }
+        
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('downloadBtn').disabled = show;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+        
+        function hideVideoInfo() {
+            document.getElementById('videoInfo').style.display = 'none';
+        }
+        
+
+        
+
+        
+        // Allow Enter key to trigger download
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchVideoInfo();
+            }
+        });
+    </script>
+</body>
+</html>
