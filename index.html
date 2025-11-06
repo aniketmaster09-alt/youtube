@@ -499,7 +499,7 @@ async function fetchVideoInfo() {
                     const videoTitle = document.getElementById('videoTitle').textContent || 'video';
                     const cleanTitle = videoTitle.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
                     const filename = `${cleanTitle}_${format.label}.${format.ext}`;
-                    const proxyUrl = `http://localhost:5000/download?url=${encodeURIComponent(format.url)}&filename=${encodeURIComponent(filename)}`;
+                    const finalUrl = inputUrl;
                     
                     const a = document.createElement('a');
                     a.href = proxyUrl;
